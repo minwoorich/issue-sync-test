@@ -51,6 +51,38 @@ class GitHubNotionSync:
             print(f"✗ GitHub API 호출 실패: {e}")
             sys.exit(1)
 
+    def convert_body_to_blocks(self, body: str) -> List[Dict]:
+        """이슈 본문을 Notion 블록으로 변환합니다"""
+        if not body or body.strip() == "":
+            return [{
+                "object": "block",
+                "type": "paragraph",
+                "paragraph": {
+                    "rich_text": [{
+                        "type": "text",
+                        "text": {"content": "(내용 없음)"}
+                    }]
+                }
+            }]
+        
+        blocks = []
+        lines = body.split('\n')
+        
+        for line in lines:
+            # 빈 줄도 paragraph로 추가 (Notion에서 줄바꿈 표현)
+            blocks.append({
+                "object": "block",
+                "type": "paragraph",
+                "paragraph": {
+                    "rich_text": [{
+                        "type": "text",
+                        "text": {"content": line}
+                    }] if line.strip() else []
+                }
+            })
+        
+        return blocks
+
     def search_notion_page_by_issue_number(self, issue_number: int) -> Optional[str]:
         """Notion에서 이슈 번호로 페이지를 검색합니다"""
         url = f"https://api.notion.com/v1/databases/{self.notion_database_id}/query"
@@ -139,6 +171,10 @@ class GitHubNotionSync:
                 ]
             }
         
+        # 이슈 본문을 페이지 콘텐츠로 추가
+        issue_body = issue.get("body", "")
+        data["children"] = self.convert_body_to_blocks(issue_body)
+        
         try:
             response = requests.post(url, headers=self.notion_headers, json=data)
             response.raise_for_status()
@@ -205,8 +241,13 @@ class GitHubNotionSync:
             }
         
         try:
+            # 1. 페이지 속성 업데이트
             response = requests.patch(url, headers=self.notion_headers, json=data)
             response.raise_for_status()
+            
+            # 2. 페이지 본문(블록) 업데이트
+            self.update_page_content(page_id, issue)
+            
             print(f"  ✓ Issue #{issue['number']} 업데이트 완료: {issue['title']}")
             return True
         except requests.exceptions.RequestException as e:
@@ -214,6 +255,31 @@ class GitHubNotionSync:
             if hasattr(e.response, 'text'):
                 print(f"    에러 상세: {e.response.text}")
             return False
+
+    def update_page_content(self, page_id: str, issue: Dict):
+        """페이지 본문(블록)을 업데이트합니다"""
+        try:
+            # 1. 기존 블록 가져오기
+            blocks_url = f"https://api.notion.com/v1/blocks/{page_id}/children"
+            response = requests.get(blocks_url, headers=self.notion_headers)
+            response.raise_for_status()
+            existing_blocks = response.json().get("results", [])
+            
+            # 2. 기존 블록 삭제
+            for block in existing_blocks:
+                delete_url = f"https://api.notion.com/v1/blocks/{block['id']}"
+                requests.delete(delete_url, headers=self.notion_headers)
+            
+            # 3. 새 블록 추가
+            issue_body = issue.get("body", "")
+            new_blocks = self.convert_body_to_blocks(issue_body)
+            
+            append_data = {"children": new_blocks}
+            response = requests.patch(blocks_url, headers=self.notion_headers, json=append_data)
+            response.raise_for_status()
+            
+        except requests.exceptions.RequestException as e:
+            print(f"    ⚠ 본문 업데이트 실패 (속성은 업데이트됨): {e}")
 
     def sync(self):
         """GitHub Issues를 Notion으로 동기화합니다"""
