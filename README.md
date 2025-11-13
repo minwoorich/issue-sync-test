@@ -6,6 +6,7 @@ GitHub Issues와 Notion 데이터베이스를 동기화하는 자동화 도구�
 
 - ✅ GitHub Issues → Notion 동기화
 - 📝 이슈 제목, 상태, 라벨, 본문 내용 모두 동기화
+- 🎨 Markdown 완전 지원: 헤딩, 코드 블록, 리스트, 체크박스, 인용구, 굵은 글씨 등
 - 🔄 이슈 생성, 수정, 닫기 시 자동 동기화
 - ⏰ 주기적 자동 동기화 (매 시간)
 - 🎯 수동 실행 가능
@@ -84,7 +85,14 @@ python sync_issues.py
    - Notion에 이미 존재하는지 확인 (Issue Number로 검색)
    - 존재하면: 속성 및 본문 내용 업데이트
    - 존재하지 않으면: 새 페이지 생성 및 본문 추가
-3. 이슈 본문은 줄바꿈 기준으로 Notion paragraph 블록으로 변환되어 저장
+3. 이슈 본문 Markdown을 Notion 블록으로 변환:
+   - `# 헤딩` → Heading 블록
+   - ` ```코드``` ` → Code 블록 (언어 구문 강조 포함)
+   - `- 리스트` → Bulleted List
+   - `1. 리스트` → Numbered List
+   - `- [ ] 체크박스` → To-do 블록
+   - `> 인용구` → Quote 블록
+   - `` `인라인 코드` ``, `**굵은 글씨**` → Rich Text 스타일
 
 ## 파일 구조
 

@@ -5,6 +5,7 @@ GitHub Issues를 Notion 데이터베이스로 동기화하는 스크립트
 
 import os
 import sys
+import re
 import requests
 from datetime import datetime
 from typing import List, Dict, Optional
@@ -52,7 +53,7 @@ class GitHubNotionSync:
             sys.exit(1)
 
     def convert_body_to_blocks(self, body: str) -> List[Dict]:
-        """이슈 본문을 Notion 블록으로 변환합니다"""
+        """이슈 본문(Markdown)을 Notion 블록으로 변환합니다"""
         if not body or body.strip() == "":
             return [{
                 "object": "block",
@@ -67,21 +68,268 @@ class GitHubNotionSync:
         
         blocks = []
         lines = body.split('\n')
+        i = 0
         
-        for line in lines:
-            # 빈 줄도 paragraph로 추가 (Notion에서 줄바꿈 표현)
-            blocks.append({
-                "object": "block",
-                "type": "paragraph",
-                "paragraph": {
-                    "rich_text": [{
-                        "type": "text",
-                        "text": {"content": line}
-                    }] if line.strip() else []
-                }
-            })
+        while i < len(lines):
+            line = lines[i]
+            
+            # 코드 블록 처리 (```)
+            if line.strip().startswith('```'):
+                code_block, lines_consumed = self._parse_code_block(lines[i:])
+                blocks.append(code_block)
+                i += lines_consumed
+                continue
+            
+            # 헤딩 처리 (# ## ###)
+            heading_match = re.match(r'^(#{1,3})\s+(.+)$', line)
+            if heading_match:
+                level = len(heading_match.group(1))
+                text = heading_match.group(2)
+                blocks.append(self._create_heading_block(level, text))
+                i += 1
+                continue
+            
+            # 인용구 처리 (>)
+            if line.strip().startswith('>'):
+                text = line.strip()[1:].strip()
+                blocks.append(self._create_quote_block(text))
+                i += 1
+                continue
+            
+            # 불릿 리스트 처리 (-, *)
+            bullet_match = re.match(r'^[\s]*[-*]\s+(.+)$', line)
+            if bullet_match:
+                text = bullet_match.group(1)
+                blocks.append(self._create_bullet_list_block(text))
+                i += 1
+                continue
+            
+            # 번호 리스트 처리 (1. 2. 3.)
+            number_match = re.match(r'^[\s]*\d+\.\s+(.+)$', line)
+            if number_match:
+                text = number_match.group(1)
+                blocks.append(self._create_numbered_list_block(text))
+                i += 1
+                continue
+            
+            # 체크박스 리스트 처리 (- [ ] or - [x])
+            checkbox_match = re.match(r'^[\s]*[-*]\s+\[([ xX])\]\s+(.+)$', line)
+            if checkbox_match:
+                checked = checkbox_match.group(1).lower() == 'x'
+                text = checkbox_match.group(2)
+                blocks.append(self._create_todo_block(text, checked))
+                i += 1
+                continue
+            
+            # 일반 paragraph (rich text 포함)
+            if line.strip():
+                blocks.append(self._create_paragraph_block(line))
+            else:
+                # 빈 줄
+                blocks.append(self._create_paragraph_block(""))
+            
+            i += 1
         
         return blocks
+
+    def _parse_code_block(self, lines: List[str]) -> tuple:
+        """코드 블록 파싱 (``` ~ ```)"""
+        first_line = lines[0].strip()
+        language = first_line[3:].strip() or "plain text"
+        
+        code_lines = []
+        i = 1
+        while i < len(lines):
+            if lines[i].strip() == '```':
+                break
+            code_lines.append(lines[i])
+            i += 1
+        
+        code_content = '\n'.join(code_lines)
+        
+        block = {
+            "object": "block",
+            "type": "code",
+            "code": {
+                "rich_text": [{
+                    "type": "text",
+                    "text": {"content": code_content[:2000]}  # Notion 제한
+                }],
+                "language": self._map_language(language)
+            }
+        }
+        
+        return block, i + 1
+
+    def _map_language(self, lang: str) -> str:
+        """GitHub 언어를 Notion 언어로 매핑"""
+        lang_map = {
+            "js": "javascript",
+            "ts": "typescript",
+            "py": "python",
+            "rb": "ruby",
+            "sh": "shell",
+            "bash": "shell",
+            "yml": "yaml",
+            "": "plain text"
+        }
+        return lang_map.get(lang.lower(), lang.lower())
+
+    def _create_heading_block(self, level: int, text: str) -> Dict:
+        """헤딩 블록 생성"""
+        heading_type = f"heading_{level}"
+        return {
+            "object": "block",
+            "type": heading_type,
+            heading_type: {
+                "rich_text": self._parse_rich_text(text)
+            }
+        }
+
+    def _create_quote_block(self, text: str) -> Dict:
+        """인용구 블록 생성"""
+        return {
+            "object": "block",
+            "type": "quote",
+            "quote": {
+                "rich_text": self._parse_rich_text(text)
+            }
+        }
+
+    def _create_bullet_list_block(self, text: str) -> Dict:
+        """불릿 리스트 블록 생성"""
+        return {
+            "object": "block",
+            "type": "bulleted_list_item",
+            "bulleted_list_item": {
+                "rich_text": self._parse_rich_text(text)
+            }
+        }
+
+    def _create_numbered_list_block(self, text: str) -> Dict:
+        """번호 리스트 블록 생성"""
+        return {
+            "object": "block",
+            "type": "numbered_list_item",
+            "numbered_list_item": {
+                "rich_text": self._parse_rich_text(text)
+            }
+        }
+
+    def _create_todo_block(self, text: str, checked: bool) -> Dict:
+        """체크박스 블록 생성"""
+        return {
+            "object": "block",
+            "type": "to_do",
+            "to_do": {
+                "rich_text": self._parse_rich_text(text),
+                "checked": checked
+            }
+        }
+
+    def _create_paragraph_block(self, text: str) -> Dict:
+        """일반 paragraph 블록 생성"""
+        return {
+            "object": "block",
+            "type": "paragraph",
+            "paragraph": {
+                "rich_text": self._parse_rich_text(text) if text.strip() else []
+            }
+        }
+
+    def _parse_rich_text(self, text: str) -> List[Dict]:
+        """Markdown 인라인 스타일을 Notion rich text로 변환"""
+        # 간단한 구현: 일단 plain text로
+        # TODO: 굵은 글씨(**), 이탤릭(*), 인라인 코드(`), 링크([]()), 등 처리 가능
+        
+        if not text or len(text) == 0:
+            return []
+        
+        # 텍스트가 너무 길면 잘라냄 (Notion 제한)
+        if len(text) > 2000:
+            text = text[:1997] + "..."
+        
+        rich_text_parts = []
+        
+        # 인라인 코드 처리 (`)
+        parts = re.split(r'(`[^`]+`)', text)
+        for part in parts:
+            if not part:
+                continue
+            
+            if part.startswith('`') and part.endswith('`'):
+                # 인라인 코드
+                rich_text_parts.append({
+                    "type": "text",
+                    "text": {"content": part[1:-1]},
+                    "annotations": {"code": True}
+                })
+            else:
+                # 굵은 글씨, 이탤릭 등 처리
+                rich_text_parts.extend(self._parse_bold_italic(part))
+        
+        return rich_text_parts if rich_text_parts else [{
+            "type": "text",
+            "text": {"content": text}
+        }]
+
+    def _parse_bold_italic(self, text: str) -> List[Dict]:
+        """굵은 글씨(**) 와 이탤릭(*) 처리"""
+        if not text:
+            return []
+        
+        # 굵은 글씨 + 이탤릭 (***) 
+        bold_italic_pattern = r'\*\*\*([^\*]+)\*\*\*'
+        # 굵은 글씨 (**)
+        bold_pattern = r'\*\*([^\*]+)\*\*'
+        # 이탤릭 (*)
+        italic_pattern = r'\*([^\*]+)\*'
+        
+        # 복잡한 파싱 대신 간단하게 처리
+        # 실제로는 재귀적으로 파싱해야 하지만, 기본 케이스만 처리
+        
+        parts = []
+        remaining = text
+        
+        # 굵은 글씨 찾기
+        for match in re.finditer(bold_pattern, remaining):
+            start, end = match.span()
+            
+            # 앞부분 일반 텍스트
+            if start > 0:
+                before = remaining[:start]
+                if before:
+                    parts.append({
+                        "type": "text",
+                        "text": {"content": before}
+                    })
+            
+            # 굵은 글씨 부분
+            parts.append({
+                "type": "text",
+                "text": {"content": match.group(1)},
+                "annotations": {"bold": True}
+            })
+            
+            remaining = remaining[end:]
+        
+        # 남은 텍스트
+        if remaining and not parts:
+            # 굵은 글씨가 없었다면 그냥 일반 텍스트로
+            parts.append({
+                "type": "text",
+                "text": {"content": text}
+            })
+        elif remaining:
+            parts.append({
+                "type": "text",
+                "text": {"content": remaining}
+            })
+        
+        return parts if parts else [{
+            "type": "text",
+            "text": {"content": text}
+        }]
 
     def search_notion_page_by_issue_number(self, issue_number: int) -> Optional[str]:
         """Notion에서 이슈 번호로 페이지를 검색합니다"""
