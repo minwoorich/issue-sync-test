@@ -15,9 +15,9 @@
 # 형식: owner/repo (예: jangjunho/my-project)
 repositories:
   # 개인 레포 예시
-  - jangjunho/issue-sync-test
-  # - jangjunho/my-project
-  # - jangjunho/another-project
+  - junhojang01/issue-sync-test
+  - junhojang01/deeplink-test
+  # - junhojang01/another-project
   
   # Organization 레포 예시 (나중에 사용)
   # - myorg/backend-api
@@ -25,13 +25,23 @@ repositories:
   # - myorg/mobile-app
 
 # ============================================================
-# 고급 설정 (선택사항)
+# 고급 설정
 # ============================================================
 
 # GitHub Personal Access Token 사용 여부
-# - false: 기본 GITHUB_TOKEN 사용 (권장 - 개인 레포)
-# - true: GITHUB_PAT Secret 사용 (Organization 또는 여러 레포)
-use_personal_access_token: false
+# 
+# false (기본): GITHUB_TOKEN 사용
+#   - 현재 레포만 접근 가능
+#   - 추가 설정 불필요
+#   - ⚠️ 다른 private 레포는 접근 불가!
+#
+# true: GITHUB_PAT Secret 사용 (권장!)
+#   - 여러 private 레포 접근 가능
+#   - User/Organization Projects 접근 가능
+#   - GitHub Secrets에 GITHUB_PAT 추가 필요
+#   - PAT 권한: repo (read), read:project
+#
+use_personal_access_token: true  # ← 여러 레포 + Projects 사용 시 true!
 
 # Projects 동기화 활성화 여부
 sync_projects: true
@@ -46,24 +56,40 @@ issue_state: all
 max_issues_per_repo: 100
 
 # ============================================================
-# 참고 사항
+# 참고 사항 및 설정 가이드
 # ============================================================
 #
-# 1. 개인 레포만 동기화:
-#    - repositories에 본인 레포만 추가
-#    - use_personal_access_token: false (기본 GITHUB_TOKEN 사용)
+# 1. 단일 레포 동기화 (가장 간단):
+#    - repositories: 1개만 추가
+#    - use_personal_access_token: false
+#    - 추가 설정 불필요
 #
-# 2. Organization 레포 동기화:
-#    - repositories에 organization/repo 추가
-#    - use_personal_access_token: true
+# 2. 여러 private 레포 동기화 (현재 설정):
+#    - repositories: 여러 개 추가
+#    - use_personal_access_token: true ← 필수!
 #    - GitHub Secrets에 GITHUB_PAT 추가 필요
 #
-# 3. config.yml이 없는 경우:
+# 3. User/Organization Projects 사용 (권장):
+#    - use_personal_access_token: true ← 필수!
+#    - PAT 권한 필요:
+#      • Repository: Issues (read), Contents (read), Projects (read)
+#      • Organization: Projects (read) - Org Projects 사용 시
+#    - 이렇게 해야 전역 Projects 정보를 가져올 수 있습니다!
+#
+# 4. config.yml이 없는 경우:
 #    - 현재 레포만 동기화 (기본 동작)
 #    - GITHUB_REPOSITORY 환경 변수 사용
 #
-# 4. 권한:
-#    - 개인 레포: 기본 GITHUB_TOKEN으로 충분
-#    - Organization: PAT 필요 (repo, project 읽기 권한)
+# 5. PAT 생성 방법:
+#    - GitHub Settings → Developer settings → Personal access tokens
+#    - Fine-grained tokens (권장) 또는 Classic
+#    - Repository access: 동기화할 레포들 선택
+#    - Permissions: Issues (read), Contents (read), Projects (read)
+#    - GitHub Secrets에 'GITHUB_PAT' 이름으로 추가
+#
+# 6. 보안:
+#    - PAT는 절대 코드에 포함하지 마세요!
+#    - GitHub Secrets에만 저장
+#    - config.yml에는 true/false만 작성
 #
 
