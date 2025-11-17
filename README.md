@@ -13,9 +13,11 @@ GitHub Issues와 Notion 데이터베이스를 동기화하는 자동화 도구�
 3. **[GitHub Secrets](./docs/03-github-secrets.md)** - API Key 및 권한 설정
 4. **[테스트 실행](./docs/04-testing.md)** - 동기화 테스트 및 확인
 5. **[여러 레포 동기화](./docs/05-multiple-repos.md)** - 중앙 수집 모드 (선택사항)
+6. **[Classic Token 가이드](./docs/06-classic-token-guide.md)** - PAT 생성 (여러 레포 + Projects)
 
 ⏱️ **기본 설정 시간: 약 40-50분**  
-⏱️ **여러 레포 설정: +15-20분**
+⏱️ **여러 레포 설정: +15-20분**  
+⏱️ **Classic Token: +10분**
 
 ## 기능
 

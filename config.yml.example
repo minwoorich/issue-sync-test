@@ -80,12 +80,19 @@ max_issues_per_repo: 100
 #    - 현재 레포만 동기화 (기본 동작)
 #    - GITHUB_REPOSITORY 환경 변수 사용
 #
-# 5. PAT 생성 방법:
-#    - GitHub Settings → Developer settings → Personal access tokens
-#    - Fine-grained tokens (권장) 또는 Classic
-#    - Repository access: 동기화할 레포들 선택
-#    - Permissions: Issues (read), Contents (read), Projects (read)
-#    - GitHub Secrets에 'GITHUB_PAT' 이름으로 추가
+# 5. PAT 생성 방법 (Classic Token 권장!):
+#    A. Classic Token (간단하고 확실함):
+#       - GitHub Settings → Developer settings → Personal access tokens
+#       - Tokens (classic) → Generate new token (classic)
+#       - Scopes: 'repo' ✓, 'read:project' ✓ (2개만!)
+#       - GitHub Secrets에 'PAT_GITHUB' 이름으로 추가
+#
+#    B. Fine-grained Token (Projects 권한이 불안정할 수 있음):
+#       - Personal access tokens → Fine-grained tokens
+#       - Repository access: 동기화할 레포들 선택
+#       - Repository permissions: Issues (read), Contents (read), Projects (read)
+#       - Account permissions: Projects (read) - User Projects 사용 시
+#       - GitHub Secrets에 'PAT_GITHUB' 이름으로 추가
 #
 # 6. 보안:
 #    - PAT는 절대 코드에 포함하지 마세요!

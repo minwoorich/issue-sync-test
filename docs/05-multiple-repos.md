@@ -120,50 +120,136 @@ use_personal_access_token: true  # PAT 필요!
 
 ## Organization PAT 설정
 
-Organization 레포에 접근하려면 Personal Access Token이 필요합니다.
+여러 private 레포와 Projects에 접근하려면 Personal Access Token이 필요합니다.
 
-### 1. PAT 생성
+### ⚠️ 중요: Classic Token 사용 권장!
+
+Fine-grained Token의 Projects 권한이 불안정할 수 있습니다.
+**Classic Token을 사용하면 확실하게 작동합니다!** ✅
+
+---
+
+### 방법 1: Classic Token (권장! ⭐)
+
+#### 1. Classic Token 생성
 
 **GitHub → Settings → Developer settings → Personal access tokens**
 
 1. **Personal access tokens** 클릭
-2. **Fine-grained tokens** 선택 (권장)
-3. **Generate new token** 클릭
+2. **Tokens (classic)** 선택 ← **이쪽!**
+3. **Generate new token (classic)** 클릭
 
-### 2. Token 설정
+#### 2. Token 설정
 
 ```
-Token name: notion-sync-pat
-Description: For Notion sync across repos
+Note: notion-sync-classic
+Description: For Notion sync with Projects
 
-Resource owner: [Organization 선택]
-Repository access: [필요한 레포 선택]
-  - All repositories
-  또는
-  - Only select repositories → 필요한 레포 선택
+Expiration: 90 days (또는 원하는 기간)
 
-Permissions:
-  Repository permissions:
-    - Issues: Read-only ✓
-    - Contents: Read-only ✓
-    - Metadata: Read-only ✓ (자동)
-    - Projects: Read-only ✓
+Select scopes:
+  ✓ repo  ← 체크! (전체 레포 읽기/쓰기)
+    ✓ repo:status (자동)
+    ✓ repo_deployment (자동)
+    ✓ public_repo (자동)
+    ✓ repo:invite (자동)
+    ✓ security_events (자동)
+  
+  ✓ read:project  ← 체크! (Projects 읽기)
 ```
 
-### 3. Generate & Copy
+**⚠️ 주의:** `repo`와 `read:project` 2개만 체크하면 됩니다!
+
+#### 3. Generate & Copy
 
 - **Generate token** 클릭
 - Token 복사 (다시 볼 수 없음!)
+- 형식: `ghp_xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx`
 
-### 4. GitHub Secret 추가
+---
+
+### 방법 2: Fine-grained Token (고급 사용자)
+
+#### 1. Fine-grained Token 생성
+
+**GitHub → Settings → Developer settings → Personal access tokens**
+
+1. **Personal access tokens** 클릭
+2. **Fine-grained tokens** 선택
+3. **Generate new token** 클릭
+
+#### 2. Token 설정
+
+```
+Token name: notion-sync-fine-grained
+Description: For Notion sync across repos
+
+Expiration: 90 days
+
+Resource owner: [본인 계정 선택]
+
+Repository access:
+  ☑ Only select repositories
+    - junhojang01/issue-sync-test
+    - junhojang01/deeplink-test
+    - (동기화할 레포들 모두 선택)
+```
+
+#### 3. Permissions 설정
+
+**Repository permissions:** (스크롤 필요!)
+```
+Actions: No access
+Administration: No access
+...
+Issues: Read-only ✓
+Contents: Read-only ✓
+Metadata: Read-only ✓ (자동)
+...
+Projects: Read-only ✓  ← 찾아서 체크! (알파벳 P...)
+```
+
+**Account permissions:** (User Projects 사용 시)
+```
+Projects: Read-only ✓  ← 이것도 체크!
+```
+
+⚠️ **주의:** Fine-grained Token에서 Projects 권한이 제대로 작동하지 않을 수 있습니다.
+**문제 발생 시 Classic Token 사용을 권장합니다!**
+
+#### 4. Generate & Copy
+
+- **Generate token** 클릭
+- Token 복사
+
+---
+
+### 공통: GitHub Secret 추가
+
+**⚠️ 중요:** GitHub는 `GITHUB_`로 시작하는 Secret 이름을 허용하지 않습니다!
+
+따라서 **`PAT_GITHUB`** 이름을 사용합니다.
+
+#### Secret 추가:
 
 Repository → Settings → Secrets and variables → Actions
 
 ```
-Name: GITHUB_PAT
+Name: PAT_GITHUB  ← GITHUB_PAT 아님! (등록 불가)
 Secret: ghp_xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx
-        ↑ 복사한 PAT
+        ↑ 복사한 Classic Token
 ```
+
+#### workflow에서 사용:
+
+```yaml
+env:
+  GITHUB_PAT: ${{ secrets.PAT_GITHUB }}
+             환경변수↑      ↑Secret 이름
+```
+
+- **Secret 이름**: `PAT_GITHUB` (GitHub에 저장)
+- **환경변수 이름**: `GITHUB_PAT` (Python에서 사용)
 
 ### 5. config.yml 업데이트
 

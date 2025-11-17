@@ -61,10 +61,23 @@ Repository Secrets에 API Key를 안전하게 저장합니다.
 
 여러 레포의 이슈를 한 곳에서 중앙 관리합니다.
 - config.yml 설정
-- Organization PAT 설정
+- PAT 설정 (Classic Token 권장)
 - 중앙 수집 모드
 
 예상 소요 시간: **15분** (Organization은 20분)
+
+---
+
+### Step 6: Classic Token 가이드 (PAT 필요 시)
+**[→ 06-classic-token-guide.md](./06-classic-token-guide.md)**
+
+여러 레포 및 Projects 연동을 위한 Classic Token 생성 가이드입니다.
+- Classic Token 생성 방법
+- 필요한 권한 (repo, read:project)
+- Secret 추가 (PAT_GITHUB)
+- 문제 해결
+
+예상 소요 시간: **10분**
 
 ---
 
