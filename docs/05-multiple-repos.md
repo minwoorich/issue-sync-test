@@ -255,17 +255,22 @@ API 개선           | username/project-c  | #3      | Closed
 
 ## 주의사항
 
-### ⚠️ config.yml은 .gitignore에 추가됨
+### ⚠️ config.yml은 Git에 포함됩니다
 
-`config.yml`은 자동으로 `.gitignore`에 추가되어 있습니다.
+`config.yml`은 **레포지토리에 커밋**됩니다.
 
 **이유:**
-- 레포 목록이 민감할 수 있음
-- Organization 구조 노출 방지
+- GitHub Actions가 설정 파일을 읽어야 함
+- 레포 목록은 일반적으로 공개 정보 (민감하지 않음)
 
-**팀과 공유하려면:**
-- `config.yml.example` 사용 (이미 포함됨)
-- 각자 복사해서 사용
+**민감한 정보는 절대 포함하지 마세요:**
+- ❌ API Keys, Tokens → GitHub Secrets 사용
+- ❌ 비밀번호, 개인정보
+- ✅ 레포 목록 (public/private 레포 이름은 OK)
+
+**팀과 공유:**
+- config.yml을 push하면 모두 동일한 설정 사용
+- `config.yml.example`은 참고용
 
 ### ⚠️ PAT 보안
 

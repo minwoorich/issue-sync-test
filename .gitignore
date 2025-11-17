@@ -1,6 +1,3 @@
-# Config file (복사해서 사용)
-config.yml
-
 # Python
 __pycache__/
 *.py[cod]

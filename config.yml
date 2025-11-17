@@ -1,11 +1,9 @@
-# GitHub Issues → Notion 동기화 설정 파일 (예시)
+# GitHub Issues → Notion 동기화 설정 파일
 #
 # 사용 방법:
-# 1. 이 파일을 'config.yml'로 복사 (또는 직접 수정)
+# 1. 이 파일을 'config.yml'로 복사
 # 2. 동기화할 레포 목록 수정
-# 3. git add config.yml && git commit && git push
-#
-# 참고: config.yml은 git에 포함됩니다 (레포 목록은 공개 정보)
+# 3. git push
 
 # ============================================================
 # 레포 설정
@@ -15,7 +13,10 @@
 # 형식: owner/repo (예: jangjunho/my-project)
 repositories:
   # 개인 레포 예시
-  - jangjunho/issue-sync-test
+  - junhojang01/issue-sync-test
+  - junhojang01/deeplink-test
+  - junhojang01/mac-recording-app
+  - junhojang01/electron-recording-app
   # - jangjunho/my-project
   # - jangjunho/another-project
   
