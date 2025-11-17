@@ -613,6 +613,18 @@ class GitHubNotionSync:
                 ]
             }
         
+        # Milestone 추가 (있는 경우)
+        if issue.get("milestone"):
+            data["properties"]["Milestone"] = {
+                "rich_text": [
+                    {
+                        "text": {
+                            "content": issue["milestone"]["title"]
+                        }
+                    }
+                ]
+            }
+        
         # Repository 추가 (여러 레포 지원 시 유용)
         data["properties"]["Repository"] = {
             "rich_text": [
@@ -762,6 +774,18 @@ class GitHubNotionSync:
                 ]
             }
         
+        # Milestone 업데이트 (있는 경우)
+        if issue.get("milestone"):
+            data["properties"]["Milestone"] = {
+                "rich_text": [
+                    {
+                        "text": {
+                            "content": issue["milestone"]["title"]
+                        }
+                    }
+                ]
+            }
+        
         # Repository 업데이트
         data["properties"]["Repository"] = {
             "rich_text": [
@@ -807,6 +831,14 @@ class GitHubNotionSync:
                     }
                 }
             
+            # Size
+            if "Size" in fields:
+                data["properties"]["Size"] = {
+                    "select": {
+                        "name": fields["Size"]
+                    }
+                }
+            
             # Story Points (Number)
             if "Story Points" in fields:
                 data["properties"]["Story Points"] = {
@@ -820,16 +852,18 @@ class GitHubNotionSync:
                 }
             
             # Sprint (Iteration)
-            if "Sprint" in fields:
-                data["properties"]["Sprint"] = {
-                    "rich_text": [
-                        {
-                            "text": {
-                                "content": str(fields["Sprint"])
+            sprint_field_names = ["Sprint", "Iteration"]
+            for sprint_field in sprint_field_names:
+                if sprint_field in fields:
+                    data["properties"]["Sprint"] = {
+                        "rich_text": [
+                            {
+                                "text": {
+                                    "content": str(fields[sprint_field])
+                                }
                             }
-                        }
-                    ]
-                }
+                        ]
+                    }
             
             # Date 필드들 (Start date, Target date, Due date 등)
             # Date 타입 필드는 자동으로 감지하여 추가

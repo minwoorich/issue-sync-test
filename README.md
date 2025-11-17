@@ -37,21 +37,102 @@ GitHub Issues와 Notion 데이터베이스를 동기화하는 자동화 도구�
 - ⏰ 주기적 자동 동기화 (매 시간)
 - 🎯 수동 실행 가능
 
+## 📊 동기화되는 필드
+
+현재 동기화가 지원되는 모든 필드 목록입니다.
+
+### 📌 GitHub Issue 기본 필드 (10개)
+
+GitHub Issue의 기본 정보가 자동으로 동기화됩니다.
+
+| # | Notion 속성 | 타입 | GitHub 필드 | 필수 | 설명 |
+|---|------------|------|-------------|------|------|
+| 1 | **Title** | Title | `title` | ✅ | 이슈 제목 |
+| 2 | **Issue Number** | Number | `number` | ✅ | 이슈 번호 (#1, #2, ...) |
+| 3 | **Status** | Select | `state` | ✅ | Open / Closed |
+| 4 | **Labels** | Text | `labels` | ✅ | 라벨 (쉼표 구분) |
+| 5 | **URL** | URL | `html_url` | ✅ | GitHub 이슈 링크 |
+| 6 | **Created At** | Date | `created_at` | ✅ | 생성 날짜 |
+| 7 | **Assignee** | Text | `assignee.login` | ⭕ | 담당자 (없을 수 있음) |
+| 8 | **Milestone** | Text | `milestone.title` | ⭕ | 마일스톤 (없을 수 있음) |
+| 9 | **Repository** | Text | `repository.full_name` | ✅ | 레포지토리 (여러 레포 시) |
+| 10 | **(본문)** | Blocks | `body` | ⭕ | Markdown → Notion 블록 변환 |
+
+**범례:** ✅ 필수 / ⭕ 선택 (값이 있을 때만)
+
+### 🎯 GitHub Projects V2 필드 (10개)
+
+Projects V2에 이슈가 추가되어 있고, 필드 값이 설정되어 있으면 자동 동기화됩니다.
+
+| # | Notion 속성 | 타입 | Projects 필드 타입 | 예시 값 |
+|---|------------|------|-------------------|---------|
+| 1 | **Project** | Text | - | 2024 Development |
+| 2 | **Project Status** | Select | Single Select | Backlog, Ready, In progress, In review, Done |
+| 3 | **Priority** | Select | Single Select | Critical, High, Medium, Low |
+| 4 | **Size** | Select | Single Select | XS, S, M, L, XL |
+| 5 | **Story Points** | Number | Number | 1, 2, 3, 5, 8, 13 |
+| 6 | **Capacity** | Number | Number | 시간 단위 (1, 2, 5, 8) |
+| 7 | **Sprint** | Text | Iteration | Sprint 1, 2024-W01 |
+| 8 | **Start date** | Date | Date | 2024-01-15 |
+| 9 | **Target date** | Date | Date | 2024-02-01 |
+| 10 | **Due date** | Date | Date | 2024-02-15 |
+
+**✨ 모든 커스텀 필드 추가 가능!** - [가이드 보기](./docs/07-custom-fields-guide.md)
+
+### 🎨 지원되는 Projects 필드 타입
+
+| GitHub Projects 타입 | Notion 타입 | 지원 | 예시 |
+|---------------------|-------------|------|------|
+| **Single Select** | Select | ✅ | Status, Priority, Size, Team |
+| **Number** | Number | ✅ | Story Points, Capacity, Estimated Hours |
+| **Text** | Text | ✅ | Notes, Description |
+| **Date** | Date | ✅ | Start date, Target date, Due date |
+| **Iteration** | Text | ✅ | Sprint, Iteration |
+| Multi-Select | Multi-select | ⚠️ | Tags (수동 추가 가능) |
+
+**⚠️ 참고:** Multi-Select는 코드 수정이 필요합니다. [커스텀 필드 가이드](./docs/07-custom-fields-guide.md) 참고
+
+---
+
 ## 설정 방법
 
 ### 1. Notion 데이터베이스 준비
 
-Notion에서 다음 속성을 가진 데이터베이스를 생성하세요:
+**필수 속성 (Issue 기본):**
+
+| 속성 이름 | 타입 | 필수 |
+|----------|------|------|
+| Title | Title | ✅ |
+| Issue Number | Number | ✅ |
+| Status | Select (Open, Closed) | ✅ |
+| Labels | Text | ✅ |
+| URL | URL | ✅ |
+| Created At | Date | ✅ |
+
+**선택 속성 (Issue 추가):**
 
 | 속성 이름 | 타입 | 설명 |
 |----------|------|------|
-| Title | Title | 이슈 제목 |
-| Issue Number | Number | 이슈 번호 |
-| Status | Select | Open / Closed |
-| Labels | Text | 라벨 목록 |
-| URL | URL | GitHub 이슈 링크 |
-| Created At | Date | 생성일 |
-| Assignee | Text | 담당자 (선택) |
+| Assignee | Text | 담당자 |
+| Milestone | Text | 마일스톤 |
+| Repository | Text | 레포 이름 (여러 레포 동기화 시) |
+
+**Projects 속성 (Projects V2 사용 시):**
+
+| 속성 이름 | 타입 | 옵션 |
+|----------|------|------|
+| Project | Text | - |
+| Project Status | Select | Backlog, Ready, In progress, In review, Done |
+| Priority | Select | Critical, High, Medium, Low |
+| Size | Select | XS, S, M, L, XL |
+| Story Points | Number | - |
+| Capacity | Number | - |
+| Sprint | Text | - |
+| Start date | Date | - |
+| Target date | Date | - |
+| Due date | Date | - |
+
+**⚠️ Select 옵션은 GitHub Projects와 정확히 일치해야 합니다!**
 
 ### 2. Notion Integration 생성
 
