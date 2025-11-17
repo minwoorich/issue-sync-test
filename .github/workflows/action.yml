@@ -11,7 +11,7 @@ on:
     types: [opened, edited, deleted, closed, reopened, labeled, unlabeled]
   workflow_dispatch:  # 수동 실행 가능
   schedule:
-    - cron: '*/5 * * * *'  # 매 5분마다 실행 (선택사항)
+    - cron: '*/15 * * * *'  # 매 5분마다 실행 (선택사항)
 
 jobs:
   sync:
